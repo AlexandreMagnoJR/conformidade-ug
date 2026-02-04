@@ -1163,7 +1163,7 @@ let periodoRaw = document.getElementById("periodo").value; // yyyy-mm
 let [ano, mes] = periodoRaw.split("-");
 let meses = ["JAN","FEV","MAR","ABR","MAI","JUN","JUL","AGO","SET","OUT","NOV","DEZ"];
 let periodoExtenso = meses[parseInt(mes)-1] + "-" + ano;
-let periodoArquivo = mes + "-" + ano;
+let periodoArquivo = mes + "/" + ano;
 
 /* =========================
    DATA/HORA FINALIZAÇÃO
