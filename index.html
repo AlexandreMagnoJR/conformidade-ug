@@ -93,7 +93,7 @@ margin-bottom:20px;
 <td colspan="4">
 <div style="display:flex;align-items:left;gap:8px;">
 <strong>UG:</strong>
-<select>
+<select id="ug">
 <option value="">Selecione</option>
 <option>100001 SMG</option>
 <option>110001 CVL</option>
@@ -1144,42 +1144,78 @@ Saldo Total da Disponibilidade por Destinação de Recursos (Disponível) = Sald
 <button onclick="finalizar()">FINALIZAR PREENCHIMENTO</button>
 
 <script>
-
 function finalizar(){
 
 if(!confirm("Tem certeza que deseja finalizar o preenchimento?")){
-return;
+  return;
 }
 
-let ug = document.getElementById("ug").value;
-let periodo = document.getElementById("periodo").value;
+/* =========================
+   CAPTURA UG (somente número)
+========================= */
+let ugCompleta = document.getElementById("ug").value;
+let ugNumero = ugCompleta.split(" ")[0];
 
-let linhas = document.querySelectorAll("tbody tr");
+/* =========================
+   PERÍODO
+========================= */
+let periodoRaw = document.getElementById("periodo").value; // yyyy-mm
+let [ano, mes] = periodoRaw.split("-");
+let meses = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+let periodoExtenso = meses[parseInt(mes)-1] + "-" + ano;
+let periodoArquivo = mes + "-" + ano;
 
-let csv = "UG;Periodo;Item;Descricao;Conformidade;Observacao\n";
+/* =========================
+   DATA/HORA FINALIZAÇÃO
+========================= */
+let agora = new Date();
+let dataHora = agora.toLocaleDateString("pt-BR") + " " + agora.toLocaleTimeString("pt-BR");
 
-linhas.forEach(linha=>{
+/* =========================
+   COLETA DOS SELECTS SIM/NÃO/N/A
+========================= */
+let selects = document.querySelectorAll("select");
 
-let item = linha.cells[0].innerText;
-let desc = linha.cells[1].innerText;
-let conf = linha.cells[2].querySelector("select").value;
-let obs = linha.cells[3].querySelector("textarea").value;
+let respostas = [];
 
-csv += `${ug};${periodo};${item};${desc};${conf};${obs}\n`;
+selects.forEach(sel=>{
+  let temSim = false;
+  [...sel.options].forEach(o=>{
+    if(o.text=="SIM") temSim=true;
+  });
 
+  if(temSim){
+    let v = sel.value;
+    if(v=="SIM") respostas.push("S");
+    else if(v=="NÃO") respostas.push("N");
+    else respostas.push("n/a");
+  }
 });
 
-let blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
+/* =========================
+   MONTA LINHA CSV ÚNICA
+========================= */
+let linha = respostas.join(";") + ";" + ugNumero + ";" + periodoExtenso + ";" + dataHora;
+
+/* =========================
+   CRIA CSV
+========================= */
+let blob = new Blob([linha], {type:"text/csv;charset=utf-8;"});
 let link = document.createElement("a");
 link.href = URL.createObjectURL(blob);
-link.download = `Conformidade_${ug}_${periodo}.csv`;
+link.download = `UG ${ugNumero} - CHECKLIST DE CONFORMIDADE DE UG_${periodoArquivo}.csv`;
 link.click();
 
-window.print();
+/* =========================
+   IMPRIMIR PDF
+========================= */
+setTimeout(()=>{
+   window.print();
+},300);
 
 }
-
 </script>
+
 
 </body>
 </html>
