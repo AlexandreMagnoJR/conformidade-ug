@@ -1159,11 +1159,13 @@ let ugNumero = ugCompleta.split(" ")[0];
 /* =========================
    PERÍODO
 ========================= */
-let periodoRaw = document.getElementById("periodo").value; // yyyy-mm
-let [ano, mes] = periodoRaw.split("/");
+let periodoRaw = document.getElementById("periodo").value; // ex: 2026-01
+let partes = periodoRaw.split("-");
+let ano = partes[0];
+let mesNum = parseInt(partes[1]);
+
 let meses = ["JAN","FEV","MAR","ABR","MAI","JUN","JUL","AGO","SET","OUT","NOV","DEZ"];
-let periodoExtenso = meses[parseInt(mes)-1] + "-" + ano;
-let periodoArquivo = mes + "/" + ano;
+let periodo = meses[mesNum-1] + "/" + ano;
 
 /* =========================
    DATA/HORA FINALIZAÇÃO
