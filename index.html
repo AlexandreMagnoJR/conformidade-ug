@@ -75,6 +75,12 @@ margin-top:20px;
 margin-bottom:20px;
 }
 
+.campo-invalido{
+  border: 2px solid #d93025 !important;
+  background-color: #fdecea !important;
+}
+
+
 </style>
 
 <!-- BIBLIOTECAS PDF -->
@@ -199,7 +205,7 @@ margin-bottom:20px;
 <td colspan="4">
 <div style="display:flex;align-items:center;gap:8px;">
 <strong>Gerente:</strong>
-<select>
+<select id="gerente>
 <option>Selecione</option>
 <option>ALINE FERREIRA DA SILVA TEIXEIRA</option>
 <option>EUGÊNIO COSTA CABRAL</option>
@@ -215,7 +221,7 @@ margin-bottom:20px;
 <td colspan="4">
 <div style="display:flex;align-items:center;gap:8px;">
 <strong>Contador:</strong>
-<select>
+<select id="contador">
 <option>Selecione</option>
 <option>ADRIANO LUIZ MEDINA</option>
 <option>ALEXANDRE CARDOSO QUINTANILHA</option>
@@ -1169,25 +1175,86 @@ Saldo Total da Disponibilidade por Destinação de Recursos (Disponível) = Sald
 <button onclick="finalizar()">FINALIZAR PREENCHIMENTO</button>
 
 <script>
+
+/* =========================
+   FUNÇÃO DE DESTAQUE
+========================= */
+function marcarInvalido(campo){
+  campo.classList.add("campo-invalido");
+  campo.focus();
+
+  campo.addEventListener("change", () => {
+    campo.classList.remove("campo-invalido");
+  }, { once:true });
+}
+
+/* =========================
+   FINALIZAR
+========================= */
 function finalizar(){
 
   if(!confirm("Tem certeza que deseja finalizar o preenchimento?")){
     return;
   }
 
-  let ugCompleta = document.getElementById("ug").value;
+  /* =========================
+     VALIDAÇÕES OBRIGATÓRIAS
+  ========================= */
+  let ug = document.getElementById("ug");
+  let periodo = document.getElementById("periodo");
+  let gerente = document.getElementById("gerente");
+  let contador = document.getElementById("contador");
+
+  if(ug.value === ""){
+    alert("Preencha o campo UG.");
+    marcarInvalido(ug);
+    return;
+  }
+
+  if(periodo.value === ""){
+    alert("Preencha o campo Período de Apuração.");
+    marcarInvalido(periodo);
+    return;
+  }
+
+  if(gerente.value === "Selecione"){
+    alert("Selecione o Gerente responsável.");
+    marcarInvalido(gerente);
+    return;
+  }
+
+  if(contador.value === "Selecione"){
+    alert("Selecione o Contador responsável.");
+    marcarInvalido(contador);
+    return;
+  }
+
+  /* =========================
+     UG
+  ========================= */
+  let ugCompleta = ug.value;
   let ugNumero = ugCompleta.split(" ")[0];
 
-  let periodoRaw = document.getElementById("periodo").value;
+  /* =========================
+     PERÍODO
+  ========================= */
+  let periodoRaw = periodo.value; // yyyy-mm
   let [ano, mes] = periodoRaw.split("-");
   let meses = ["JAN","FEV","MAR","ABR","MAI","JUN","JUL","AGO","SET","OUT","NOV","DEZ"];
   let periodoCSV = meses[parseInt(mes)-1] + "/" + ano;
   let periodoArquivo = mes + "-" + ano;
 
+  /* =========================
+     DATA / HORA
+  ========================= */
   let agora = new Date();
-  let dataHora = agora.toLocaleDateString("pt-BR") + " " +
-                 agora.toLocaleTimeString("pt-BR");
+  let dataHora =
+    agora.toLocaleDateString("pt-BR") + " " +
+    agora.toLocaleTimeString("pt-BR");
 
+  /* =========================
+     COLETA SIM / NÃO / N/A
+  ========================= */
   let respostas = [];
   document.querySelectorAll("select").forEach(sel=>{
     const textos = [...sel.options].map(o => o.text);
@@ -1198,6 +1265,9 @@ function finalizar(){
     }
   });
 
+  /* =========================
+     CSV
+  ========================= */
   let linhaCSV =
     respostas.join(";") + ";" +
     ugNumero + ";" +
@@ -1211,6 +1281,9 @@ function finalizar(){
     `UG ${ugNumero} - CHECKLIST DE CONFORMIDADE DE UG_${periodoArquivo}.csv`;
   link.click();
 
+  /* =========================
+     PDF
+  ========================= */
   setTimeout(()=>{
     gerarPDF(
       `UG ${ugNumero} - CHECKLIST DE CONFORMIDADE DE UG_${periodoArquivo}.pdf`
@@ -1218,6 +1291,9 @@ function finalizar(){
   }, 300);
 }
 
+/* =========================
+   GERAR PDF
+========================= */
 async function gerarPDF(nomeArquivo){
 
   const { jsPDF } = window.jspdf;
@@ -1232,11 +1308,22 @@ async function gerarPDF(nomeArquivo){
     const el = document.getElementById(paginas[i]);
     if(!el) continue;
 
-    const canvas = await html2canvas(el,{scale:2,useCORS:true});
+    const canvas = await html2canvas(el,{
+      scale:2,
+      useCORS:true
+    });
+
     const img = canvas.toDataURL("image/png");
 
     if(i>0) pdf.addPage();
-    pdf.addImage(img,"PNG",0,0,210,canvas.height*210/canvas.width);
+    pdf.addImage(
+      img,
+      "PNG",
+      0,
+      0,
+      210,
+      canvas.height * 210 / canvas.width
+    );
   }
 
   pdf.save(nomeArquivo);
