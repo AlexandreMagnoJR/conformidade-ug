@@ -76,6 +76,12 @@ margin-bottom:20px;
 }
 
 </style>
+
+<!-- BIBLIOTECAS PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+
 </head>
 
 <body>
@@ -235,6 +241,8 @@ margin-bottom:20px;
 <!-- A PARTIR DAQUI ENTRARÃO OS BLOCOS -->
 
 <!--<div id="blocos"></div>-->
+
+<div id="pagina1">
 <h2>1 - CONCILIAÇÃO BANCÁRIA</h2>
 
 <table border="1" cellpadding="6" cellspacing="0" width="100%">
@@ -358,8 +366,11 @@ margin-bottom:20px;
 
 </tbody>
 </table>
+</div>
 
-  <h2>2 - PATRIMONIAL</h2>
+  
+<div id="pagina2">
+<h2>2 - PATRIMONIAL</h2>
 
 <table border="1" cellpadding="6" cellspacing="0" width="100%">
 <thead>
@@ -477,7 +488,10 @@ margin-bottom:20px;
 
 </tbody>
 </table>
+</div>
 
+
+<div id="pagina3">
   <h2>3 - RECEITA</h2>
 
 <table border="1" cellpadding="6" cellspacing="0" width="100%">
@@ -586,7 +600,10 @@ margin-bottom:20px;
 
 </tbody>
 </table>
+</div>
 
+
+<div id="pagina4">
   <h2>4 - DESPESA</h2>
 
 <table border="1" cellpadding="6" cellspacing="0" width="100%">
@@ -616,7 +633,7 @@ margin-bottom:20px;
 </select>
 </td>
 <td><textarea rows="3"></textarea></td>
-</tr>>
+</tr>
 
 <tr>
 <td>4.2</td>
@@ -736,7 +753,7 @@ margin-bottom:20px;
 </select>
 </td>
 <td><textarea rows="3"></textarea></td>
-</tr>>
+</tr>
 
 <tr>
 <td>4.10</td>
@@ -755,7 +772,10 @@ margin-bottom:20px;
 
 </tbody>
 </table>
+</div>
 
+
+<div id="pagina5">
   <h2>5 - VALIDAÇÕES CONTÁBEIS</h2>
 
 <table border="1" cellpadding="6" cellspacing="0" width="100%">
@@ -866,7 +886,10 @@ Saldo Total da Disponibilidade por Destinação de Recursos (Disponível) = Sald
 
 </tbody>
 </table>
+</div>
 
+
+<div id="pagina6">
   <h2>6 - DEMONSTRAÇÕES CONTÁBEIS</h2>
 
 <table border="1" cellpadding="6" cellspacing="0" width="100%">
@@ -975,7 +998,10 @@ Saldo Total da Disponibilidade por Destinação de Recursos (Disponível) = Sald
 
 </tbody>
 </table>
+</div>
 
+
+<div id="pagina7">
   <h2>DOCUMENTOS DE AJUSTE CONTÁBIL NO MÊS</h2>
 
 <table border="1" cellpadding="6" cellspacing="0" width="100%">
@@ -1137,78 +1163,87 @@ Saldo Total da Disponibilidade por Destinação de Recursos (Disponível) = Sald
 <!-- DUPLIQUE ESSE BLOCO DE <tr> SE QUISER MAIS LINHAS -->
 
 </table>
+</div>
 
 <button onclick="finalizar()">FINALIZAR PREENCHIMENTO</button>
 
 <script>
 function finalizar(){
 
-if(!confirm("Tem certeza que deseja finalizar o preenchimento?")){
-  return;
-}
+  if(!confirm("Tem certeza que deseja finalizar o preenchimento?")){
+    return;
+  }
 
-/* =========================
-   CAPTURA UG (somente número)
-========================= */
-let ugCompleta = document.getElementById("ug").value;
-let ugNumero = ugCompleta.split(" ")[0];
+  let ugCompleta = document.getElementById("ug").value;
+  let ugNumero = ugCompleta.split(" ")[0];
 
-/* =========================
-   PERÍODO
-========================= */
-let periodoRaw = document.getElementById("periodo").value; // yyyy-mm
-let [ano, mes] = periodoRaw.split("-");
-let meses = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
-let periodoExtenso = meses[parseInt(mes)-1] + "-" + ano;
-let periodoArquivo = mes + "-" + ano;
+  let periodoRaw = document.getElementById("periodo").value;
+  let [ano, mes] = periodoRaw.split("-");
+  let meses = ["JAN","FEV","MAR","ABR","MAI","JUN","JUL","AGO","SET","OUT","NOV","DEZ"];
+  let periodoCSV = meses[parseInt(mes)-1] + "/" + ano;
+  let periodoArquivo = mes + "-" + ano;
 
-/* =========================
-   DATA/HORA FINALIZAÇÃO
-========================= */
-let agora = new Date();
-let dataHora = agora.toLocaleDateString("pt-BR") + " " + agora.toLocaleTimeString("pt-BR");
+  let agora = new Date();
+  let dataHora = agora.toLocaleDateString("pt-BR") + " " +
+                 agora.toLocaleTimeString("pt-BR");
 
-/* =========================
-   COLETA DOS SELECTS SIM/NÃO/N/A
-========================= */
-let selects = document.querySelectorAll("select");
-
-let respostas = [];
-
-selects.forEach(sel=>{
-  let temSim = false;
-  [...sel.options].forEach(o=>{
-    if(o.text=="SIM") temSim=true;
+  let respostas = [];
+  document.querySelectorAll("select").forEach(sel=>{
+    const textos = [...sel.options].map(o => o.text);
+    if(textos.includes("SIM") && textos.includes("NÃO")){
+      if(sel.value === "SIM") respostas.push("S");
+      else if(sel.value === "NÃO") respostas.push("N");
+      else respostas.push("n/a");
+    }
   });
 
-  if(temSim){
-    let v = sel.value;
-    if(v=="SIM") respostas.push("S");
-    else if(v=="NÃO") respostas.push("N");
-    else respostas.push("n/a");
+  let linhaCSV =
+    respostas.join(";") + ";" +
+    ugNumero + ";" +
+    periodoCSV + ";" +
+    dataHora;
+
+  let blob = new Blob([linhaCSV], {type:"text/csv;charset=utf-8;"});
+  let link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download =
+    `UG ${ugNumero} - CHECKLIST DE CONFORMIDADE DE UG_${periodoArquivo}.csv`;
+  link.click();
+
+  setTimeout(()=>{
+    gerarPDF(
+      `UG ${ugNumero} - CHECKLIST DE CONFORMIDADE DE UG_${periodoArquivo}.pdf`
+    );
+  }, 300);
+}
+
+async function gerarPDF(nomeArquivo){
+
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF("p", "mm", "a4");
+
+  const paginas = [
+    "pagina1","pagina2","pagina3",
+    "pagina4","pagina5","pagina6","pagina7"
+  ];
+
+  for(let i=0;i<paginas.length;i++){
+    const el = document.getElementById(paginas[i]);
+    if(!el) continue;
+
+    const canvas = await html2canvas(el,{scale:2,useCORS:true});
+    const img = canvas.toDataURL("image/png");
+
+    if(i>0) pdf.addPage();
+    pdf.addImage(img,"PNG",0,0,210,canvas.height*210/canvas.width);
   }
-});
 
-/* =========================
-   MONTA LINHA CSV ÚNICA
-========================= */
-let linha = respostas.join(";") + ";" + ugNumero + ";" + periodoExtenso + ";" + dataHora;
-
-/* =========================
-   CRIA CSV
-========================= */
-let blob = new Blob([linha], {type:"text/csv;charset=utf-8;"});
-let link = document.createElement("a");
-link.href = URL.createObjectURL(blob);
-link.download = `UG ${ugNumero} - CHECKLIST DE CONFORMIDADE DE UG_${periodoArquivo}.csv`;
-link.click();
-
-/* =========================
-   IMPRIMIR PDF
-========================= */
-setTimeout(()=>{
-   window.print();
-},300);
-
+  pdf.save(nomeArquivo);
 }
 </script>
+
+
+
+
+</body>
+</html>
